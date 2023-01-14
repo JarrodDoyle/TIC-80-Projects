@@ -22,15 +22,14 @@
 // 2 - Jumping
 // 3 - Falling
 // 4 - Grabbing
-// 5 - Diving
+// 5 - Ladder
+// 6 - Diving
 
 // Bindings
 // 
 
 // TODO:
-// - Improve wall grabbing
-//  - Shouldn't be able to grab slopes!
-//  - You can grab super low atm
+// - Add ladders
 // - Add jump diving
 // - QOL stuff
 //  - Jump coyote time, and buffering
@@ -52,21 +51,17 @@ function T2G(){
 		return false;
 
 	// Is there a collision on the side we're facing?
-	var qh=Math.floor(0.25*P.cr.h)
+	var h=P.cr.h;
 	var x=P.p.x+P.cr.x+(P.fr?P.cr.w:-1);
-	var y=P.p.y+P.cr.y+qh;
-	pix(x,y,15);
-	if(!CollisionRect(x,y,1,2*qh,[0]))
+	var y=P.p.y+P.cr.y;
+	if(!CollisionRect(x,y,1,Math.floor(0.75*h),[0]))
 		return false;
 
-	// Is the tile above the one on our centre side non-solid?
-	y+=qh;
-	var mx=Math.floor(x/8);
-	var my=Math.floor(y/8)-1;
-	var mi=mget(mx,my);
-	if(fget(mi,0))
+	// Are we near the top of the thing we're trying to grab?
+	if(CollisionXY(x,y-Math.floor(0.5*h),[0]))
 		return false;
 
+	// Transition!
 	P.ms=4;
 	P.v.x=0;
 	P.v.y=0;
@@ -331,8 +326,7 @@ function CollisionXY(x,y,fs){
 
 	var t=mget(Math.floor(x/8),Math.floor(y/8));
 	for(var i in fs){
-		var f=fs[i];
-		if(fget(t,f))
+		if(fget(t,fs[i]))
 			return true;
 	}
 	return false;
