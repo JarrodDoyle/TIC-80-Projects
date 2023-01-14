@@ -25,11 +25,7 @@
 // 5 - Ladder
 // 6 - Diving
 
-// Bindings
-// 
-
 // TODO:
-// - Add ladders
 // - Add jump diving
 // - QOL stuff
 //  - Jump coyote time, and buffering
@@ -43,6 +39,9 @@
 // - Plan out a story and map
 // - Audio and visual polish
 // - Timer/speedrun mode
+
+// Design notes
+// - Should ledge grabs be automatic? They'd only trigger when jumping or falling
 
 // Transition to grabbing
 function T2G(){
@@ -68,6 +67,26 @@ function T2G(){
 	return true;
 }
 
+// Transition to climbing
+function T2C(){
+	var x=P.p.x+P.cr.x+Math.floor(P.cr.w*0.25);
+	var y=P.p.y+P.cr.y;
+	var w=Math.floor(P.cr.w*0.5);
+	var h=P.cr.h;
+
+	// Go up
+	if(btn(0)&&CollisionRect(x,y,w,h,[2])){
+		P.p.y-=1;
+		P.ms=5;
+	}
+
+	// Go down
+	if(btn(1)&&IsGroundedL(P,1)&&CollisionRect(x,y+1,w,h,[2])){
+		P.p.y+=1;
+		P.ms=5;
+	}
+}
+
 var W={
 	c:13,
 	mck:15,
@@ -90,11 +109,12 @@ var P={
 		{id:257,c:4,fps:2}, // Jumping
 		{id:257,c:4,fps:2}, // Falling
 		{id:289,c:1,fps:1}, // Grabbing
+		{id:305,c:4,fps:8}, // Climbing
 	],
 
 	// Jump settings
 	jsy:0, // JumpStartY
-	jh:8*1, // JumpHeight
+	jh:8, // JumpHeight
 };
 
 function upfr(l,r){
@@ -137,6 +157,12 @@ function UpdatePlayer(){
 			MoveY(P,[0]);
 			MoveX(P,[0]);
 			break;
+		case 5: // Climbing
+			P.v.x=l?-1:r?1:0;
+			P.v.y=u?-1:d?1:0;
+			MoveY(P,[0]);
+			MoveX(P,[0],true);
+			break;
 	}
 
 	// Transition
@@ -155,6 +181,7 @@ function UpdatePlayer(){
 				P.p.y+=1;
 			}
 			T2G();
+			T2C();
 			break;
 		case 1: // Running
 			if(!l&&!r)P.ms=0;
@@ -168,18 +195,21 @@ function UpdatePlayer(){
 				P.p.y+=1;
 			}
 			T2G();
+			T2C();
 			break;
 		case 2: // Jumping
 			if(g&&!l&&!r)P.ms=0;
 			if(g&&(l||r))P.ms=1;
 			if(!u||P.v.y==0||P.p.y<=P.jsy-P.jh)P.ms=3;
 			T2G();
+			T2C();
 			break;
 		case 3: // Falling
 			if(g&&!l&&!r)P.ms=0;
 			if(g&&(l||r))P.ms=1;
 			if(P.ms!=3)P.v.y=0;
 			T2G();
+			T2C();
 			break;
 		case 4: // Grabbing
 			if(btnp(4))P.ms=3;
@@ -187,6 +217,19 @@ function UpdatePlayer(){
 				P.ms=2;
 				P.jsy=P.p.y;
 			}
+			break;
+		case 5: // Climbing
+			if(btn(4))P.ms=3;
+
+			// Leave the ladder
+			var x=P.p.x+P.cr.x+Math.floor(P.cr.w*0.25);
+			var y=P.p.y+P.cr.y;
+			var w=Math.floor(P.cr.w*0.5);
+			var h=P.cr.h;
+			var c=CollisionRect(x,y,w,h,[2]);
+			if(!c)P.ms=3;
+			if(g&&c)P.ms=0;
+		
 			break;
 	}
 
@@ -259,7 +302,7 @@ function MoveY(e,fs){
 	}
 }
 
-function MoveX(e,fs){
+function MoveX(e,fs,dsy){
 	// Only move when sub-pixel position is >=1 (or <=-1)
 	var dx=e.v.x;
 	e.p.xr+=dx;
@@ -290,7 +333,7 @@ function MoveX(e,fs){
 		}
 
 		// Shift up or down 1 px if necessary
-		if(e.v.y==0){
+		if(!dsy&&e.v.y==0){
 			if(!ty_c&&!by_c&&!cy_c){
 				if(!CollisionRect(e.p.x+e.cr.x+sign_dx,by+1,e.cr.w,1,fs)) e.p.y++;
 			}else if(!ty_c&&!cy_c&&!CollisionXY(x,ty-1,fs)){
@@ -433,6 +476,10 @@ function TIC()
 // 019:777757777755577c775a077c77aaa7c7778887c777a88aa77a88877777978777
 // 020:777757777755577c775a077c77aaa7c7778887c777a88aa777a8877777978777
 // 033:7777577777555777775a077777aaa77777888a777788a7777c888777c7787977
+// 049:77757777775557777755577777a5ac777788c7a77a8c8a777ac8877777879777
+// 050:77757777775557777755577777a5ac77a788c7777a8c8aa777c8877777879777
+// 051:77757777775557777755577777a5ac77a788c7777a8c8a7777c88a7777978777
+// 052:77757777775557777755577777a5ac777788c7a7aa8c8a7777c8877777978777
 // </SPRITES>
 
 // <MAP>
