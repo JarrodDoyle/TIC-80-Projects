@@ -92,6 +92,13 @@ var W={
 	c:13,
 	mck:15,
 	p:{x:0,y:0},
+
+	// Map animation table - TileID:{FrameCount,FPS,SpriteOffset}
+	s:{
+		"12":{c:4,f:16,o:1}, // Rain
+		"104":{c:2,f:2,o:16}, // Grass1
+		"120":{c:2,f:3,o:-16}, // Grass2
+	}
 };
 
 var P={
@@ -117,6 +124,14 @@ var P={
 	jsy:0, // JumpStartY
 	jh:8, // JumpHeight
 };
+
+
+function remap(id){
+	var at=W.s[String(id)];
+	if(at!=null)return id+at.o*(Math.floor(t/(1000/at.f))%at.c);
+
+	return id;
+}
 
 function upfr(l,r){
 	// Set correct facing
@@ -393,7 +408,7 @@ function TIC()
 	t=time();
 
 	cls(W.c);
-	map(W.p.x,W.p.y,30,17,0,0,W.mck);
+	map(W.p.x,W.p.y,30,17,0,0,W.mck,1,remap);
 	UpdatePlayer();
 
 	var m=mouse();
